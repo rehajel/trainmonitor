@@ -25,6 +25,8 @@ public class Main {
     private static javax.swing.JLabel[] platLabels = new javax.swing.JLabel[MAX_ROWS];
     private static javax.swing.JLabel[] statusLabels = new javax.swing.JLabel[MAX_ROWS];
 
+    private static javax.swing.JLabel clockLabel;
+
     public static void main(String[] args) {
 
         String url = "https://fahrplan.oebb.at/bin/mgate.exe";
@@ -32,7 +34,7 @@ public class Main {
         HttpClient client = HttpClient.newHttpClient();
 
         JFrame frame = new JFrame("Train Monitor");
-        frame.setSize(750, 420);
+        frame.setSize(550, 320);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null); // Center on screen
 
@@ -43,36 +45,45 @@ public class Main {
         JPanel headerPanel = new JPanel(new java.awt.BorderLayout());
         headerPanel.setBackground(Color.DARK_GRAY);
         headerPanel.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 80));
+        //headerPanel.setPreferredSize(new java.awt.Dimension(Integer.MAX_VALUE, 20));
         headerPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
         javax.swing.JLabel titleLabel = new javax.swing.JLabel("Abfahrten nach Hatting");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 28));
         titleLabel.setForeground(Color.WHITE);
         headerPanel.add(titleLabel, java.awt.BorderLayout.WEST);
+
+        clockLabel = new javax.swing.JLabel("Stand: --:--");
+        clockLabel.setFont(new Font("Arial", Font.ITALIC, 16));
+        clockLabel.setForeground(Color.LIGHT_GRAY);
+        headerPanel.add(clockLabel, java.awt.BorderLayout.EAST);
+
         panel.add(headerPanel);
 
-        // Optional: Separator Line
+        // Separator Line
         JPanel separator = new JPanel();
         separator.setBackground(new Color(100, 100, 100));
         separator.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 2));
+        separator.setPreferredSize(new java.awt.Dimension(Integer.MAX_VALUE, 2));
         panel.add(separator);
+
+        // Space Below Separator
         panel.add(javax.swing.Box.createRigidArea(new java.awt.Dimension(0, 15)));
 
         // 2. Loop to build our 5 blank rows
         for (int i = 0; i < MAX_ROWS; i++) {
-            // Create a horizontal grid row split into 4 columns
-            JPanel row = new JPanel(new java.awt.GridLayout(1, 4));
-            row.setMaximumSize(new java.awt.Dimension(800, 50));
+            JPanel row = new JPanel(new java.awt.BorderLayout());
+            row.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 45));
             row.setBackground(Color.DARK_GRAY);
             row.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 15, 5, 15));
 
-            // Initialize the actual labels into our top-level arrays
+            // --- 1. INITIALIZE ALL INSTANCES FIRST (Prevents NullPointerException!) ---
             timeLabels[i] = new javax.swing.JLabel("00:00");
-            destLabels[i] = new javax.swing.JLabel("Destination");
-            platLabels[i] = new javax.swing.JLabel("Platform");
-            statusLabels[i] = new javax.swing.JLabel("Status");
+            destLabels[i] = new javax.swing.JLabel("Lade Zug...");
+            platLabels[i] = new javax.swing.JLabel("-");
+            statusLabels[i] = new javax.swing.JLabel("Warten...");
 
-            // Style the fonts and colors once
+            // --- 2. STYLE THE LABELS ---
             Font rowFont = new Font("Arial", Font.PLAIN, 18);
             timeLabels[i].setFont(new Font("Arial", Font.BOLD, 18));
             timeLabels[i].setForeground(Color.WHITE);
@@ -83,19 +94,26 @@ public class Main {
             statusLabels[i].setFont(rowFont);
             statusLabels[i].setForeground(Color.GRAY);
 
-            // Place labels into the row panel
-            row.add(timeLabels[i]);
-            row.add(destLabels[i]);
-            row.add(platLabels[i]);
-            row.add(statusLabels[i]);
+            // --- 3. CREATE THE INNER HORIZONTAL LAYOUT ---
+            JPanel leftGroup = new JPanel();
+            leftGroup.setLayout(new javax.swing.BoxLayout(leftGroup, javax.swing.BoxLayout.X_AXIS));
+            leftGroup.setBackground(Color.DARK_GRAY);
 
-            // Add this row panel to our main window panel
+            // Now this is completely safe because nothing is null!
+            leftGroup.add(timeLabels[i]);
+            leftGroup.add(javax.swing.Box.createRigidArea(new java.awt.Dimension(25, 0)));
+            leftGroup.add(destLabels[i]);
+            leftGroup.add(javax.swing.Box.createRigidArea(new java.awt.Dimension(40, 0)));
+            leftGroup.add(platLabels[i]);
+
+            // --- 4. ASSEMBLE THE FINAL OUTER ROW ---
+            row.add(leftGroup, java.awt.BorderLayout.WEST);
+            row.add(statusLabels[i], java.awt.BorderLayout.EAST);
+
             panel.add(row);
         }
 
-        // 3. Add Vertical Glue at the very bottom to hold them tight against the top
         panel.add(javax.swing.Box.createVerticalGlue());
-
         frame.add(panel);
         frame.setVisible(true);
 
@@ -193,6 +211,8 @@ public class Main {
             // panel.add(javax.swing.Box.createVerticalGlue());
             // panel.revalidate(); // Recalculate layout components
             panel.repaint(); // Redraw the screen
+            String currentTime = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+            clockLabel.setText("Stand: " + currentTime);
 
         } catch (java.nio.file.NoSuchFileException e) {
             System.out.println("Error: 'request.json' is missing from the folder!");
