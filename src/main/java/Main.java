@@ -45,7 +45,7 @@ public class Main {
         JPanel headerPanel = new JPanel(new java.awt.BorderLayout());
         headerPanel.setBackground(Color.DARK_GRAY);
         headerPanel.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 80));
-        //headerPanel.setPreferredSize(new java.awt.Dimension(Integer.MAX_VALUE, 20));
+        // headerPanel.setPreferredSize(new java.awt.Dimension(Integer.MAX_VALUE, 20));
         headerPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
         javax.swing.JLabel titleLabel = new javax.swing.JLabel("Abfahrten nach Hatting");
@@ -115,11 +115,12 @@ public class Main {
 
         panel.add(javax.swing.Box.createVerticalGlue());
         frame.add(panel);
-        frame.setVisible(true);
 
         URL iconURL = Main.class.getResource("/train.png");
         ImageIcon icon = new ImageIcon(iconURL);
         frame.setIconImage(icon.getImage());
+
+        frame.setVisible(true);
 
         ActionListener refreshAction = new ActionListener() {
             @Override
@@ -137,6 +138,7 @@ public class Main {
         try {
 
             String jsonPayload = Files.readString(Paths.get("request.json"));
+            // String jsonPayload = Main.class.getResourceAsStream("/request.json");
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .header("Content-Type", "application/json")
@@ -154,14 +156,11 @@ public class Main {
             // jnyL = list of trains
             JSONArray jnyL = res.getJSONArray("jnyL");
 
-            // Add a little blank space before the train rows start
-            panel.add(javax.swing.Box.createRigidArea(new java.awt.Dimension(0, 15)));
-
             int trainsToDisplay = Math.min(jnyL.length(), MAX_ROWS);
 
             // iterate over trains
             for (int i = 0; i < trainsToDisplay; i++) {
-                Boolean delayed = false;
+                boolean delayed = false;
                 JSONObject jny = jnyL.getJSONObject(i);
                 // Get Values
                 // dirText = Destionation
@@ -211,7 +210,8 @@ public class Main {
             // panel.add(javax.swing.Box.createVerticalGlue());
             // panel.revalidate(); // Recalculate layout components
             panel.repaint(); // Redraw the screen
-            String currentTime = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+            String currentTime = java.time.LocalTime.now()
+                    .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
             clockLabel.setText("Stand: " + currentTime);
 
         } catch (java.nio.file.NoSuchFileException e) {
