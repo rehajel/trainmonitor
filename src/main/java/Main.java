@@ -32,26 +32,23 @@ public class Main {
         HttpClient client = HttpClient.newHttpClient();
 
         JFrame frame = new JFrame("Train Monitor");
-        frame.setSize(820, 520);
+        frame.setSize(750, 420);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null); // Center on screen
 
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBackground(Color.DARK_GRAY);
-        frame.add(panel);
-        // 1. Add your Header Title once (since it never needs to be recreated!)
+
         JPanel headerPanel = new JPanel(new java.awt.BorderLayout());
         headerPanel.setBackground(Color.DARK_GRAY);
+        headerPanel.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 80));
         headerPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
         javax.swing.JLabel titleLabel = new javax.swing.JLabel("Abfahrten nach Hatting");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 28));
         titleLabel.setForeground(Color.WHITE);
         headerPanel.add(titleLabel, java.awt.BorderLayout.WEST);
-
-        // We will make a dedicated top-level field for the clock later,
-        // for now let's just add the header background structure.
         panel.add(headerPanel);
 
         // Optional: Separator Line
@@ -99,6 +96,7 @@ public class Main {
         // 3. Add Vertical Glue at the very bottom to hold them tight against the top
         panel.add(javax.swing.Box.createVerticalGlue());
 
+        frame.add(panel);
         frame.setVisible(true);
 
         URL iconURL = Main.class.getResource("/train.png");
@@ -176,7 +174,7 @@ public class Main {
                 // Overwrite the text on the existing labels
                 timeLabels[i].setText(scheduledTime);
                 destLabels[i].setText(dest);
-                platLabels[i].setText("Gleis " + realPlatform);
+                platLabels[i].setText(realPlatform);
                 statusLabels[i].setText(statusText);
 
                 // Apply conditional colors dynamically
