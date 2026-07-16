@@ -108,7 +108,7 @@ public class Main {
         ActionListener refreshAction = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                fetchAndDraw(client, url, frame, panel);
+                fetchAndDraw(client, url, panel);
             }
         };
 
@@ -117,7 +117,7 @@ public class Main {
         timer.start();
     }
 
-    public static void fetchAndDraw(HttpClient client, String url, JFrame frame, JPanel panel) {
+    public static void fetchAndDraw(HttpClient client, String url, JPanel panel) {
         try {
 
             String jsonPayload = Files.readString(Paths.get("request.json"));
@@ -138,60 +138,13 @@ public class Main {
             // jnyL = list of trains
             JSONArray jnyL = res.getJSONArray("jnyL");
 
-            // --- BUILD THE HEADER PANEL ---
-            JPanel headerPanel = new JPanel(new java.awt.BorderLayout());
-            headerPanel.setBackground(Color.DARK_GRAY);
-            // Add some spacing around the header (Top, Left, Bottom, Right padding)
-            headerPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(15, 15, 15, 15));
-
-            // 1. Main Title Label
-            javax.swing.JLabel titleLabel = new javax.swing.JLabel("Abfahrten nach Hatting");
-            titleLabel.setFont(new Font("Arial", Font.BOLD, 28));
-            titleLabel.setForeground(Color.WHITE);
-            headerPanel.add(titleLabel, java.awt.BorderLayout.WEST); // Align to the left
-
-            // 2. Live "Last Updated" Clock
-            String currentTime = java.time.LocalTime.now()
-                    .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
-            javax.swing.JLabel clockLabel = new javax.swing.JLabel("Stand: " + currentTime);
-            clockLabel.setFont(new Font("Arial", Font.ITALIC, 16));
-            clockLabel.setForeground(Color.LIGHT_GRAY);
-            headerPanel.add(clockLabel, java.awt.BorderLayout.EAST); // Align to the right
-
-            // Add the complete header to the main panel first
-            panel.add(headerPanel);
-
-            // Optional: Add a stylized separator line under the header
-            JPanel separator = new JPanel();
-            separator.setBackground(new Color(100, 100, 100)); // Medium gray line
-            separator.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 2)); // 2 pixels tall, stretches wide
-            panel.add(separator);
-
-            // Labels
-            JPanel columnsRow = new JPanel(new java.awt.GridLayout(1, 4));
-            columnsRow.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 30));
-            columnsRow.setBackground(Color.DARK_GRAY);
-            // Add a little padding to match the edges of the window
-            columnsRow.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 15, 5, 15));
-
-            Font headerFont = new Font("Arial", Font.BOLD, 14);
-            Color headerColor = Color.LIGHT_GRAY;
-
-            String[] headers = { "Zeit", "Ziel", "Gleis", "Status" };
-            for (String title : headers) {
-                javax.swing.JLabel label = new javax.swing.JLabel(title);
-                label.setFont(headerFont);
-                label.setForeground(headerColor);
-                columnsRow.add(label);
-            }
-
-            panel.add(columnsRow);
-
             // Add a little blank space before the train rows start
             panel.add(javax.swing.Box.createRigidArea(new java.awt.Dimension(0, 15)));
 
+            int trainsToDisplay = Math.min(jnyL.length(), MAX_ROWS);
+
             // iterate over trains
-            for (int i = 0; i < jnyL.length(); i++) {
+            for (int i = 0; i < trainsToDisplay; i++) {
                 Boolean delayed = false;
                 JSONObject jny = jnyL.getJSONObject(i);
                 // Get Values
@@ -220,45 +173,27 @@ public class Main {
                     delayed = true;
                 }
 
-                // Create a horizontal row panel for this single train
-                JPanel row = new JPanel(new java.awt.GridLayout(1, 4)); // 1 row, 4 equal columns
-                row.setMaximumSize(new java.awt.Dimension(800, 50)); // Prevent rows from stretching vertically
-                row.setBackground(Color.DARK_GRAY);
+                // Overwrite the text on the existing labels
+                timeLabels[i].setText(scheduledTime);
+                destLabels[i].setText(dest);
+                platLabels[i].setText("Gleis " + realPlatform);
+                statusLabels[i].setText(statusText);
 
-                // Create individual labels
-                javax.swing.JLabel timeLabel = new javax.swing.JLabel(scheduledTime);
-                javax.swing.JLabel destLabel = new javax.swing.JLabel(dest);
-                javax.swing.JLabel platLabel = new javax.swing.JLabel(realPlatform);
-                javax.swing.JLabel statusLabel = new javax.swing.JLabel(statusText);
-
-                // Styling text with color and font!
-                Font rowFont = new Font("Arial", Font.PLAIN, 18);
-                timeLabel.setFont(new Font("Arial", Font.BOLD, 18));
-                timeLabel.setForeground(Color.WHITE);
-                destLabel.setFont(rowFont);
-                destLabel.setForeground(Color.WHITE);
-                platLabel.setFont(rowFont);
-                platLabel.setForeground(Color.LIGHT_GRAY);
-
-                // Conditional Colors for delays!
-                statusLabel.setFont(rowFont);
+                // Apply conditional colors dynamically
                 if (delayed) {
-                    statusLabel.setForeground(Color.RED); // Vibrant red text for delays!
+                    statusLabels[i].setForeground(Color.RED);
                 } else {
-                    statusLabel.setForeground(new Color(50, 205, 50)); // Bright Lime Green for on-time!
+                    statusLabels[i].setForeground(new Color(50, 205, 50)); // Lime green
                 }
-
-                // Add labels to the row in order (left to right)
-                row.add(timeLabel);
-                row.add(destLabel);
-                row.add(platLabel);
-                row.add(statusLabel);
-
-                // Add this complete row to your main list panel
-                panel.add(row);
             }
-            panel.add(javax.swing.Box.createVerticalGlue());
-            panel.revalidate(); // Recalculate layout components
+            for (int i = trainsToDisplay; i < MAX_ROWS; i++) {
+                timeLabels[i].setText("");
+                destLabels[i].setText("");
+                platLabels[i].setText("");
+                statusLabels[i].setText("");
+            }
+            // panel.add(javax.swing.Box.createVerticalGlue());
+            // panel.revalidate(); // Recalculate layout components
             panel.repaint(); // Redraw the screen
 
         } catch (java.nio.file.NoSuchFileException e) {
