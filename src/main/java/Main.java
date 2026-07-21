@@ -217,17 +217,17 @@ public class Main {
             }
 
             if (scheduledTime.equals(HIGHLIGHT_TIME)) {
-                rowPanels[i].setBackground(Color.black);
-                leftGroupPanels[i].setBackground(Color.black);
+                rowPanels[i].setBackground(Color.BLACK);
+                leftGroupPanels[i].setBackground(Color.BLACK);
             } else {
-                rowPanels[i].setBackground(Color.darkGray);
-                leftGroupPanels[i].setBackground(Color.darkGray);
+                rowPanels[i].setBackground(Color.DARK_GRAY);
+                leftGroupPanels[i].setBackground(Color.DARK_GRAY);
             }
 
             if (!realPlatform.equals(scheduledPlatform)) {
-                platLabels[i].setForeground(Color.orange);
+                platLabels[i].setForeground(Color.ORANGE);
             } else {
-                platLabels[i].setForeground(Color.lightGray);
+                platLabels[i].setForeground(Color.LIGHT_GRAY);
             }
         }
         for (int i = trainsToDisplay; i < MAX_ROWS; i++) {
@@ -235,9 +235,9 @@ public class Main {
             destLabels[i].setText("");
             platLabels[i].setText("");
             statusLabels[i].setText("");
-            platLabels[i].setForeground(Color.lightGray);
-            rowPanels[i].setBackground(Color.darkGray);
-            leftGroupPanels[i].setBackground(Color.darkGray);
+            platLabels[i].setForeground(Color.LIGHT_GRAY);
+            rowPanels[i].setBackground(Color.DARK_GRAY);
+            leftGroupPanels[i].setBackground(Color.DARK_GRAY);
         }
         // panel.revalidate(); // Recalculate layout components
         panel.repaint(); // Redraw the screen
