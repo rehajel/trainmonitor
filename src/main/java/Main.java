@@ -19,6 +19,7 @@ import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.time.Duration;
 
 public class Main {
 
@@ -34,7 +35,7 @@ public class Main {
 
         String url = "https://fahrplan.oebb.at/bin/mgate.exe";
 
-        HttpClient client = HttpClient.newHttpClient();
+        HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15)).build();
 
         JFrame frame = new JFrame("Train Monitor");
         frame.setSize(550, 320);
@@ -145,6 +146,7 @@ public class Main {
                 .header("Content-Type", "application/json")
                 .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
                 .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                .timeout(Duration.ofSeconds(15))
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
