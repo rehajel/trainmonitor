@@ -246,7 +246,7 @@ public class Main {
                     Throwable cause = e.getCause();
                     clockLabel.setForeground(Color.RED);
                     if (cause instanceof MissingResourceException) {
-                        clockLabel.setText("Error: reqeuest.json is missing: " + cause.getMessage());
+                        clockLabel.setText("Error: request.json is missing: " + cause.getMessage());
                     } else if (cause instanceof java.io.IOException) {
                         clockLabel.setText("Error: Could not connect to ÖBB servers: " + cause.getMessage());
                     } else if (cause instanceof org.json.JSONException) {
