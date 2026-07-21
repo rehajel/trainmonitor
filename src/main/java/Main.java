@@ -10,7 +10,6 @@ import org.json.JSONObject;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutionException;
-
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -238,19 +237,19 @@ public class Main {
                     clockLabel.setText(e.getMessage());
                 } catch (ExecutionException e) {
                     Throwable cause = e.getCause();
+                    clockLabel.setForeground(Color.RED);
                     if (cause instanceof java.nio.file.NoSuchFileException) {
-                        clockLabel.setText("Error: request.json is missing" + cause.getMessage());
+                        clockLabel.setText("Error: File is missing: " + cause.getMessage());
                     }
                     else if (cause instanceof java.io.IOException) {
-                        clockLabel.setText("Error: Could not connect to ÖBB servers" + cause.getMessage());
+                        clockLabel.setText("Error: Could not connect to ÖBB servers: " + cause.getMessage());
                     }
                     else if (cause instanceof org.json.JSONException) {
                         clockLabel.setText(
-                                "Error: ÖBB changed their data format, or request.json is corrupted." + cause.getMessage());
+                                "Error: ÖBB changed their data format, or request.json is corrupted.: " + cause.getMessage());
                     } else {
-                        clockLabel.setText("Error: Unknown Error Occured" + cause.getMessage());
+                        clockLabel.setText("Error: Unknown Error Occured: " + cause.getMessage());
                     }
-
                 }
             }
         };
