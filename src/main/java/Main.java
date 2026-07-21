@@ -24,12 +24,16 @@ import java.time.Duration;
 public class Main {
 
     private static final int MAX_ROWS = 5;
+    private static final String HIGHLIGHT_TIME = "15:29";
     private static javax.swing.JLabel[] timeLabels = new javax.swing.JLabel[MAX_ROWS];
     private static javax.swing.JLabel[] destLabels = new javax.swing.JLabel[MAX_ROWS];
     private static javax.swing.JLabel[] platLabels = new javax.swing.JLabel[MAX_ROWS];
     private static javax.swing.JLabel[] statusLabels = new javax.swing.JLabel[MAX_ROWS];
 
     private static javax.swing.JLabel clockLabel;
+
+    private static javax.swing.JPanel[] rowPanels = new javax.swing.JPanel[MAX_ROWS];
+    private static javax.swing.JPanel[] leftGroupPanels = new javax.swing.JPanel[MAX_ROWS];
 
     public static void main(String[] args) {
 
@@ -77,10 +81,10 @@ public class Main {
 
         // 2. Loop to build our 5 blank rows
         for (int i = 0; i < MAX_ROWS; i++) {
-            JPanel row = new JPanel(new java.awt.BorderLayout());
-            row.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 45));
-            row.setBackground(Color.DARK_GRAY);
-            row.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 15, 5, 15));
+            rowPanels[i] = new JPanel(new java.awt.BorderLayout());
+            rowPanels[i].setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 45));
+            rowPanels[i].setBackground(Color.DARK_GRAY);
+            rowPanels[i].setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 15, 5, 15));
 
             // --- 1. INITIALIZE ALL INSTANCES FIRST (Prevents NullPointerException!) ---
             timeLabels[i] = new javax.swing.JLabel("00:00");
@@ -100,22 +104,22 @@ public class Main {
             statusLabels[i].setForeground(Color.GRAY);
 
             // --- 3. CREATE THE INNER HORIZONTAL LAYOUT ---
-            JPanel leftGroup = new JPanel();
-            leftGroup.setLayout(new javax.swing.BoxLayout(leftGroup, javax.swing.BoxLayout.X_AXIS));
-            leftGroup.setBackground(Color.DARK_GRAY);
+            leftGroupPanels[i] = new JPanel();
+            leftGroupPanels[i].setLayout(new javax.swing.BoxLayout(leftGroupPanels[i], javax.swing.BoxLayout.X_AXIS));
+            leftGroupPanels[i].setBackground(Color.DARK_GRAY);
 
             // Now this is completely safe because nothing is null!
-            leftGroup.add(timeLabels[i]);
-            leftGroup.add(javax.swing.Box.createRigidArea(new java.awt.Dimension(25, 0)));
-            leftGroup.add(destLabels[i]);
-            leftGroup.add(javax.swing.Box.createRigidArea(new java.awt.Dimension(40, 0)));
-            leftGroup.add(platLabels[i]);
+            leftGroupPanels[i].add(timeLabels[i]);
+            leftGroupPanels[i].add(javax.swing.Box.createRigidArea(new java.awt.Dimension(25, 0)));
+            leftGroupPanels[i].add(destLabels[i]);
+            leftGroupPanels[i].add(javax.swing.Box.createRigidArea(new java.awt.Dimension(40, 0)));
+            leftGroupPanels[i].add(platLabels[i]);
 
             // --- 4. ASSEMBLE THE FINAL OUTER ROW ---
-            row.add(leftGroup, java.awt.BorderLayout.WEST);
-            row.add(statusLabels[i], java.awt.BorderLayout.EAST);
+            rowPanels[i].add(leftGroupPanels[i], java.awt.BorderLayout.WEST);
+            rowPanels[i].add(statusLabels[i], java.awt.BorderLayout.EAST);
 
-            panel.add(row);
+            panel.add(rowPanels[i]);
         }
 
         panel.add(javax.swing.Box.createVerticalGlue());
@@ -139,7 +143,8 @@ public class Main {
         timer.start();
     }
 
-    private static JSONArray fetchDepartures(HttpClient client, String url) throws IOException, InterruptedException, MissingResourceException {
+    private static JSONArray fetchDepartures(HttpClient client, String url)
+            throws IOException, InterruptedException, MissingResourceException {
         InputStream is = Main.class.getResourceAsStream("/request.json");
         if (is == null) {
             throw new MissingResourceException("request.json not found on classpath");
@@ -173,7 +178,7 @@ public class Main {
             boolean delayed = false;
             JSONObject jny = jnyL.getJSONObject(i);
             // Get Values
-            // dirText = Destionation
+            // dirText = Destination
             String dest = jny.optString("dirTxt", "Unbekannt");
             // dTimeS = Scheduled Time
             String scheduledTimeRaw = jny.getJSONObject("stbStop").getString("dTimeS");
@@ -211,8 +216,18 @@ public class Main {
                 statusLabels[i].setForeground(new Color(50, 205, 50)); // Lime green
             }
 
+            if (scheduledTime.equals(HIGHLIGHT_TIME)) {
+                rowPanels[i].setBackground(Color.black);
+                leftGroupPanels[i].setBackground(Color.black);
+            } else {
+                rowPanels[i].setBackground(Color.darkGray);
+                leftGroupPanels[i].setBackground(Color.darkGray);
+            }
+
             if (!realPlatform.equals(scheduledPlatform)) {
                 platLabels[i].setForeground(Color.orange);
+            } else {
+                platLabels[i].setForeground(Color.lightGray);
             }
         }
         for (int i = trainsToDisplay; i < MAX_ROWS; i++) {
@@ -220,8 +235,10 @@ public class Main {
             destLabels[i].setText("");
             platLabels[i].setText("");
             statusLabels[i].setText("");
+            platLabels[i].setForeground(Color.lightGray);
+            rowPanels[i].setBackground(Color.darkGray);
+            leftGroupPanels[i].setBackground(Color.darkGray);
         }
-        // panel.add(javax.swing.Box.createVerticalGlue());
         // panel.revalidate(); // Recalculate layout components
         panel.repaint(); // Redraw the screen
         String currentTime = java.time.LocalTime.now()
