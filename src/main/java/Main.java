@@ -16,6 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 
 public class Main {
 
@@ -134,86 +135,92 @@ public class Main {
         timer.start();
     }
 
+    private static JSONArray fetchDepartures(HttpClient client, String url) throws IOException, InterruptedException {
+        String jsonPayload = Files.readString(Paths.get("request.json"));
+        // String jsonPayload = Main.class.getResourceAsStream("/request.json");
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Content-Type", "application/json")
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        String responseBody = response.body();
+        JSONObject root = new JSONObject(responseBody);
+        JSONArray svcResL = root.getJSONArray("svcResL");
+        JSONObject res = svcResL.getJSONObject(0).getJSONObject("res");
+
+        // jnyL = list of trains
+        JSONArray jnyL = res.getJSONArray("jnyL");
+        return jnyL;
+    }
+
+    private static void updateLabels(JSONArray jnyL, JPanel panel) {
+        int trainsToDisplay = Math.min(jnyL.length(), MAX_ROWS);
+
+        // iterate over trains
+        for (int i = 0; i < trainsToDisplay; i++) {
+            boolean delayed = false;
+            JSONObject jny = jnyL.getJSONObject(i);
+            // Get Values
+            // dirText = Destionation
+            String dest = jny.optString("dirTxt", "Unbekannt");
+            // dTimeS = Scheduled Time
+            String scheduledTimeRaw = jny.getJSONObject("stbStop").getString("dTimeS");
+            String scheduledTime = scheduledTimeRaw.substring(0, 2) + ":" + scheduledTimeRaw.substring(2, 4);
+            // dTimeR = real Time
+            String realTimeRaw = jny.getJSONObject("stbStop").optString("dTimeR");
+            // dPltfS = Scheduled Platform
+            String scheduledPlatform = jny.getJSONObject("stbStop").getJSONObject("dPltfS").optString("txt",
+                    "schedPF");
+            // dPltfR = Real Platform
+            String realPlatform = scheduledPlatform;
+            if (jny.getJSONObject("stbStop").has("dPltfR")) {
+                JSONObject realPlatformObj = jny.getJSONObject("stbStop").getJSONObject("dPltfR");
+                realPlatform = realPlatformObj.optString("txt", scheduledPlatform);
+            }
+            // On time?
+            String statusText = "Pünktlich";
+
+            if (!realTimeRaw.isEmpty() && !realTimeRaw.equals(scheduledTimeRaw)) {
+                String realTime = realTimeRaw.substring(0, 2) + ":" + realTimeRaw.substring(2, 4);
+                statusText = "Verspätung! Neu: " + realTime;
+                delayed = true;
+            }
+
+            // Overwrite the text on the existing labels
+            timeLabels[i].setText(scheduledTime);
+            destLabels[i].setText(dest);
+            platLabels[i].setText(realPlatform);
+            statusLabels[i].setText(statusText);
+
+            // Apply conditional colors dynamically
+            if (delayed) {
+                statusLabels[i].setForeground(Color.RED);
+            } else {
+                statusLabels[i].setForeground(new Color(50, 205, 50)); // Lime green
+            }
+        }
+        for (int i = trainsToDisplay; i < MAX_ROWS; i++) {
+            timeLabels[i].setText("");
+            destLabels[i].setText("");
+            platLabels[i].setText("");
+            statusLabels[i].setText("");
+        }
+        // panel.add(javax.swing.Box.createVerticalGlue());
+        // panel.revalidate(); // Recalculate layout components
+        panel.repaint(); // Redraw the screen
+        String currentTime = java.time.LocalTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+        clockLabel.setText("Stand: " + currentTime);
+    }
+
     public static void fetchAndDraw(HttpClient client, String url, JPanel panel) {
         try {
-
-            String jsonPayload = Files.readString(Paths.get("request.json"));
-            // String jsonPayload = Main.class.getResourceAsStream("/request.json");
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Content-Type", "application/json")
-                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
-                    .build();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            String responseBody = response.body();
-            JSONObject root = new JSONObject(responseBody);
-            JSONArray svcResL = root.getJSONArray("svcResL");
-            JSONObject res = svcResL.getJSONObject(0).getJSONObject("res");
-
-            // jnyL = list of trains
-            JSONArray jnyL = res.getJSONArray("jnyL");
-
-            int trainsToDisplay = Math.min(jnyL.length(), MAX_ROWS);
-
-            // iterate over trains
-            for (int i = 0; i < trainsToDisplay; i++) {
-                boolean delayed = false;
-                JSONObject jny = jnyL.getJSONObject(i);
-                // Get Values
-                // dirText = Destionation
-                String dest = jny.optString("dirTxt", "Unbekannt");
-                // dTimeS = Scheduled Time
-                String scheduledTimeRaw = jny.getJSONObject("stbStop").getString("dTimeS");
-                String scheduledTime = scheduledTimeRaw.substring(0, 2) + ":" + scheduledTimeRaw.substring(2, 4);
-                // dTimeR = real Time
-                String realTimeRaw = jny.getJSONObject("stbStop").optString("dTimeR");
-                // dPltfS = Scheduled Platform
-                String scheduledPlatform = jny.getJSONObject("stbStop").getJSONObject("dPltfS").optString("txt",
-                        "schedPF");
-                // dPltfR = Real Platform
-                String realPlatform = scheduledPlatform;
-                if (jny.getJSONObject("stbStop").has("dPltfR")) {
-                    JSONObject realPlatformObj = jny.getJSONObject("stbStop").getJSONObject("dPltfR");
-                    realPlatform = realPlatformObj.optString("txt", scheduledPlatform);
-                }
-                // On time?
-                String statusText = "Pünktlich";
-
-                if (!realTimeRaw.isEmpty() && !realTimeRaw.equals(scheduledTimeRaw)) {
-                    String realTime = realTimeRaw.substring(0, 2) + ":" + realTimeRaw.substring(2, 4);
-                    statusText = "Verspätung! Neu: " + realTime;
-                    delayed = true;
-                }
-
-                // Overwrite the text on the existing labels
-                timeLabels[i].setText(scheduledTime);
-                destLabels[i].setText(dest);
-                platLabels[i].setText(realPlatform);
-                statusLabels[i].setText(statusText);
-
-                // Apply conditional colors dynamically
-                if (delayed) {
-                    statusLabels[i].setForeground(Color.RED);
-                } else {
-                    statusLabels[i].setForeground(new Color(50, 205, 50)); // Lime green
-                }
-            }
-            for (int i = trainsToDisplay; i < MAX_ROWS; i++) {
-                timeLabels[i].setText("");
-                destLabels[i].setText("");
-                platLabels[i].setText("");
-                statusLabels[i].setText("");
-            }
-            // panel.add(javax.swing.Box.createVerticalGlue());
-            // panel.revalidate(); // Recalculate layout components
-            panel.repaint(); // Redraw the screen
-            String currentTime = java.time.LocalTime.now()
-                    .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
-            clockLabel.setText("Stand: " + currentTime);
-
+            JSONArray jnyL = fetchDepartures(client, url);
+            updateLabels(jnyL, panel);
         } catch (java.nio.file.NoSuchFileException e) {
             System.out.println("Error: 'request.json' is missing from the folder!");
         } catch (java.io.IOException e) {
