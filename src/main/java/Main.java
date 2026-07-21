@@ -9,10 +9,13 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.concurrent.ExecutionException;
+
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -218,17 +221,41 @@ public class Main {
     }
 
     public static void fetchAndDraw(HttpClient client, String url, JPanel panel) {
-        try {
-            JSONArray jnyL = fetchDepartures(client, url);
-            updateLabels(jnyL, panel);
-        } catch (java.nio.file.NoSuchFileException e) {
-            System.out.println("Error: 'request.json' is missing from the folder!");
-        } catch (java.io.IOException e) {
-            System.out.println("Network Error: Could not connect to ÖBB servers. Check your internet.");
-        } catch (org.json.JSONException e) {
-            System.out.println("JSON Error: ÖBB changed their data format, or request.json is corrupted.");
-        } catch (Exception e) {
-            System.out.println("Unknown Error occurred: " + e.getMessage());
-        }
+
+        SwingWorker<JSONArray, Void> worker = new SwingWorker<JSONArray, Void>() {
+
+            @Override
+            protected JSONArray doInBackground() throws Exception {
+                return fetchDepartures(client, url);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    JSONArray jnyL = get();
+                    updateLabels(jnyL, panel);
+                } catch (InterruptedException e) {
+                    clockLabel.setText(e.getMessage());
+                } catch (ExecutionException e) {
+                    Throwable cause = e.getCause();
+                    if (cause instanceof java.nio.file.NoSuchFileException) {
+                        clockLabel.setText("Error: request.json is missing" + cause.getMessage());
+                    }
+                    else if (cause instanceof java.io.IOException) {
+                        clockLabel.setText("Error: Could not connect to ÖBB servers" + cause.getMessage());
+                    }
+                    else if (cause instanceof org.json.JSONException) {
+                        clockLabel.setText(
+                                "Error: ÖBB changed their data format, or request.json is corrupted." + cause.getMessage());
+                    } else {
+                        clockLabel.setText("Error: Unknown Error Occured" + cause.getMessage());
+                    }
+
+                }
+            }
+        };
+
+        worker.execute();
+
     }
 }
