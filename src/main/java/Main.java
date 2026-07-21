@@ -7,8 +7,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -19,6 +18,7 @@ import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.Duration;
 
 public class Main {
@@ -35,7 +35,8 @@ public class Main {
 
         String url = "https://fahrplan.oebb.at/bin/mgate.exe";
 
-        HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15)).build();
+        HttpClient client = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(15)).build();
 
         JFrame frame = new JFrame("Train Monitor");
         frame.setSize(550, 320);
@@ -139,8 +140,11 @@ public class Main {
     }
 
     private static JSONArray fetchDepartures(HttpClient client, String url) throws IOException, InterruptedException {
-        String jsonPayload = Files.readString(Paths.get("request.json"));
-        // String jsonPayload = Main.class.getResourceAsStream("/request.json");
+        InputStream is = Main.class.getResourceAsStream("/request.json");
+        if (is == null) {
+            throw new IOException("request.json not found on classpath");
+        }
+        String jsonPayload = new String(is.readAllBytes(), StandardCharsets.UTF_8);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("Content-Type", "application/json")
@@ -243,13 +247,12 @@ public class Main {
                     clockLabel.setForeground(Color.RED);
                     if (cause instanceof java.nio.file.NoSuchFileException) {
                         clockLabel.setText("Error: File is missing: " + cause.getMessage());
-                    }
-                    else if (cause instanceof java.io.IOException) {
+                    } else if (cause instanceof java.io.IOException) {
                         clockLabel.setText("Error: Could not connect to ÖBB servers: " + cause.getMessage());
-                    }
-                    else if (cause instanceof org.json.JSONException) {
+                    } else if (cause instanceof org.json.JSONException) {
                         clockLabel.setText(
-                                "Error: ÖBB changed their data format, or request.json is corrupted.: " + cause.getMessage());
+                                "Error: ÖBB changed their data format, or request.json is corrupted.: "
+                                        + cause.getMessage());
                     } else {
                         clockLabel.setText("Error: Unknown Error Occured: " + cause.getMessage());
                     }
