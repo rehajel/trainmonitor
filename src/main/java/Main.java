@@ -201,7 +201,7 @@ public class Main {
             // Overwrite the text on the existing labels
             timeLabels[i].setText(scheduledTime);
             destLabels[i].setText(dest);
-            platLabels[i].setText(realPlatform);
+            platLabels[i].setText(scheduledPlatform);
             statusLabels[i].setText(statusText);
 
             // Apply conditional colors dynamically
@@ -209,6 +209,10 @@ public class Main {
                 statusLabels[i].setForeground(Color.RED);
             } else {
                 statusLabels[i].setForeground(new Color(50, 205, 50)); // Lime green
+            }
+
+            if (!realPlatform.equals(scheduledPlatform)) {
+                platLabels[i].setForeground(Color.orange);
             }
         }
         for (int i = trainsToDisplay; i < MAX_ROWS; i++) {
