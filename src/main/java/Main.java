@@ -216,6 +216,7 @@ public class Main {
         panel.repaint(); // Redraw the screen
         String currentTime = java.time.LocalTime.now()
                 .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+        clockLabel.setForeground(Color.LIGHT_GRAY);
         clockLabel.setText("Stand: " + currentTime);
     }
 
