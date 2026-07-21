@@ -139,10 +139,10 @@ public class Main {
         timer.start();
     }
 
-    private static JSONArray fetchDepartures(HttpClient client, String url) throws IOException, InterruptedException {
+    private static JSONArray fetchDepartures(HttpClient client, String url) throws IOException, InterruptedException, MissingResourceException {
         InputStream is = Main.class.getResourceAsStream("/request.json");
         if (is == null) {
-            throw new IOException("request.json not found on classpath");
+            throw new MissingResourceException("request.json not found on classpath");
         }
         String jsonPayload = new String(is.readAllBytes(), StandardCharsets.UTF_8);
         HttpRequest request = HttpRequest.newBuilder()
@@ -245,8 +245,8 @@ public class Main {
                 } catch (ExecutionException e) {
                     Throwable cause = e.getCause();
                     clockLabel.setForeground(Color.RED);
-                    if (cause instanceof java.nio.file.NoSuchFileException) {
-                        clockLabel.setText("Error: File is missing: " + cause.getMessage());
+                    if (cause instanceof MissingResourceException) {
+                        clockLabel.setText("Error: reqeuest.json is missing: " + cause.getMessage());
                     } else if (cause instanceof java.io.IOException) {
                         clockLabel.setText("Error: Could not connect to ÖBB servers: " + cause.getMessage());
                     } else if (cause instanceof org.json.JSONException) {
